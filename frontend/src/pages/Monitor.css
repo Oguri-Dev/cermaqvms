@@ -1,0 +1,153 @@
+.monitor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.monitor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+.monitor-toolbar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.monitor-layout-btn {
+  width: 32px;
+  height: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.monitor-layout-btn:hover {
+  border-color: var(--cermaq-blue);
+  color: var(--text-primary);
+}
+
+.monitor-layout-btn.active {
+  background: var(--cermaq-blue-dark);
+  border-color: var(--cermaq-blue);
+  color: var(--cermaq-cyan);
+}
+
+.monitor-grid-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.monitor-grid-select:focus {
+  outline: none;
+  border-color: var(--cermaq-blue);
+}
+
+.monitor-content {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  min-height: 0;
+  justify-items: center;
+}
+
+.monitor-content.layout-1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.monitor-content.layout-2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+.monitor-content.layout-3 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.monitor-content.layout-3 .grid-screen:first-child {
+  grid-row: 1 / -1;
+}
+
+.monitor-content.layout-4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.monitor-fullscreen-btn {
+  width: 32px;
+  height: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.monitor-fullscreen-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.monitor-fullscreen-btn:hover {
+  border-color: var(--cermaq-blue);
+  color: var(--cermaq-cyan);
+}
+
+.monitor:fullscreen {
+  background: #000;
+}
+
+.monitor:fullscreen .monitor-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 30;
+}
+
+.monitor:fullscreen .monitor-toolbar:hover {
+  opacity: 1;
+}
+
+.monitor:fullscreen .monitor-content {
+  padding: 0;
+}
+
+.monitor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

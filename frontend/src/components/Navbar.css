@@ -1,0 +1,89 @@
+.navbar {
+  height: var(--navbar-height);
+  background: linear-gradient(135deg, var(--cermaq-navy-dark) 0%, var(--cermaq-navy) 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--cermaq-blue-dark);
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 32px;
+}
+
+.navbar-logo {
+  height: 30px;
+  width: auto;
+}
+
+.navbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cermaq-cyan);
+  letter-spacing: 0.5px;
+}
+
+.navbar-nav {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+  align-items: stretch;
+}
+
+.navbar-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.navbar-link:hover {
+  color: var(--text-primary);
+  background: rgba(77, 200, 232, 0.05);
+}
+
+.navbar-link.active {
+  color: var(--cermaq-cyan);
+  border-bottom-color: var(--cermaq-cyan);
+  background: rgba(77, 200, 232, 0.08);
+}
+
+.navbar-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.navbar-spacer {
+  flex: 1;
+}
+
+.navbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.navbar-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.navbar-status-dot.offline {
+  background: var(--danger);
+}

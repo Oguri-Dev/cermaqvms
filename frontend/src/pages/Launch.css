@@ -1,0 +1,96 @@
+.launch {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--cermaq-navy-dark) 0%, var(--bg-primary) 40%, var(--cermaq-navy-dark) 100%);
+  gap: 40px;
+}
+
+.launch-logo {
+  height: 80px;
+  width: auto;
+  opacity: 0.9;
+}
+
+.launch-center-name {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.launch-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: -28px;
+}
+
+.launch-btn {
+  background: linear-gradient(135deg, var(--cermaq-blue) 0%, var(--cermaq-blue-dark) 100%);
+  border: 1px solid var(--cermaq-blue-light);
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 60px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.launch-btn:hover {
+  background: linear-gradient(135deg, var(--cermaq-blue-light) 0%, var(--cermaq-blue) 100%);
+  box-shadow: 0 0 30px rgba(0, 119, 182, 0.3);
+  transform: scale(1.02);
+}
+
+.launch-btn:active {
+  transform: scale(0.98);
+}
+
+.launch-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.launch-hint {
+  font-size: 12px;
+  color: var(--cermaq-cyan);
+  margin-top: -24px;
+  letter-spacing: 0.3px;
+}
+
+.launch-config-link {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  margin-top: -20px;
+}
+
+.launch-config-link:hover {
+  color: var(--cermaq-cyan);
+  border-color: var(--cermaq-blue-dark);
+}
+
+.launch-footer {
+  position: absolute;
+  bottom: 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}

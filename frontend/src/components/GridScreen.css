@@ -1,0 +1,70 @@
+.grid-screen {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+}
+
+.grid-screen-header {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.grid-screen:hover .grid-screen-header {
+  opacity: 1;
+}
+
+.grid-screen-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.grid-screen-type {
+  font-size: 10px;
+  color: var(--cermaq-cyan);
+  background: rgba(77, 200, 232, 0.15);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.grid-screen video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.grid-screen-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.grid-screen-placeholder svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.3;
+}

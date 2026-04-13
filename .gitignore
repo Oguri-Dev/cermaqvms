@@ -1,0 +1,25 @@
+# Dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Go build
+backend/vms-cermaq
+backend/vms-cermaq.exe
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code memory (local only)
+.claude/
+MEMORY.md
+user_profile.md
+project_vms_overview.md

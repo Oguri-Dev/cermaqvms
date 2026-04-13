@@ -1,0 +1,421 @@
+.config {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Nav sidebar (icons) */
+.config-nav {
+  width: 100px;
+  background: var(--cermaq-navy-dark);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 0;
+}
+
+.config-nav-header {
+  width: 100%;
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--cermaq-cyan);
+}
+
+.config-nav-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 4px;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.config-nav-item svg {
+  width: 28px;
+  height: 28px;
+}
+
+.config-nav-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.config-nav-item:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.config-nav-item.active {
+  color: var(--cermaq-cyan);
+  background: rgba(77, 200, 232, 0.06);
+  border-left-color: var(--cermaq-cyan);
+}
+
+/* Sub-sidebar (list) */
+.config-sub-sidebar {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.config-sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.config-sidebar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Legacy - keep for compat */
+.config-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+}
+
+.config-sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.config-sidebar-nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.config-sidebar-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.config-sidebar-nav-item.active {
+  background: var(--cermaq-navy);
+  color: var(--cermaq-cyan);
+  border-left: 3px solid var(--cermaq-cyan);
+}
+
+.config-sidebar-nav-item.active svg {
+  opacity: 1;
+}
+
+.config-list-group {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px 4px;
+}
+
+.config-sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0 12px;
+}
+
+.config-add-btn {
+  background: var(--cermaq-blue-dark);
+  border: 1px solid var(--cermaq-blue);
+  color: var(--cermaq-cyan);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.config-add-btn:hover {
+  background: var(--cermaq-blue);
+}
+
+.config-grid-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.config-grid-item {
+  padding: 10px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+}
+
+.config-grid-item:hover {
+  background: var(--bg-hover);
+}
+
+.config-grid-item.active {
+  background: var(--cermaq-navy);
+  border-left: 3px solid var(--cermaq-cyan);
+}
+
+.config-grid-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.config-grid-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Main content */
+.config-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.config-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+/* Form sections */
+.config-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.config-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cermaq-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.config-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.config-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-form-group label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.config-form-group input,
+.config-form-group select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.config-form-group input:focus,
+.config-form-group select:focus {
+  outline: none;
+  border-color: var(--cermaq-blue);
+}
+
+/* Cell grid editor */
+.config-cells-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.config-cell {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.config-cell:hover {
+  border-color: var(--cermaq-blue);
+}
+
+.config-cell.active {
+  border-color: var(--cermaq-cyan);
+  background: rgba(77, 200, 232, 0.08);
+}
+
+.config-cell-pos {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.config-cell-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.config-cell-detail {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.config-cell-select {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 3px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.config-cell-select:focus {
+  outline: none;
+  border-color: var(--cermaq-blue);
+}
+
+/* Actions */
+.config-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.config-save-btn {
+  background: var(--cermaq-blue);
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.config-save-btn:hover {
+  background: var(--cermaq-blue-light);
+}
+
+.config-delete-btn {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.config-delete-btn:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.config-sync-btn {
+  background: transparent;
+  border: 1px solid var(--cermaq-cyan);
+  color: var(--cermaq-cyan);
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.config-sync-btn:hover {
+  background: rgba(77, 200, 232, 0.1);
+}
+
+.config-sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.config-sync-ok {
+  color: #4caf50;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.config-sync-err {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.config-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-checkbox input[type="checkbox"] {
+  accent-color: var(--cermaq-blue);
+  width: 18px;
+  height: 18px;
+}
+
+.config-checkbox label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

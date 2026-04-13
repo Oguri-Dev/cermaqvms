@@ -1,0 +1,65 @@
+:root {
+  /* Cermaq institutional colors */
+  --cermaq-cyan: #4DC8E8;
+  --cermaq-blue: #0077B6;
+  --cermaq-navy: #002B5C;
+
+  /* Derived palette */
+  --cermaq-cyan-light: #7DD9F0;
+  --cermaq-cyan-dark: #2AABB8;
+  --cermaq-blue-light: #339FD4;
+  --cermaq-blue-dark: #005A8C;
+  --cermaq-navy-light: #0A3F7A;
+  --cermaq-navy-dark: #001A3A;
+
+  /* UI tokens */
+  --bg-primary: #0D1B2A;
+  --bg-secondary: #1B2838;
+  --bg-card: #1E2D3D;
+  --bg-hover: #263A4D;
+  --text-primary: #E8F0F7;
+  --text-secondary: #8BA3B9;
+  --text-muted: #5A7A94;
+  --border-color: #2A3F52;
+  --success: #2ECC71;
+  --warning: #F39C12;
+  --danger: #E74C3C;
+
+  /* Navbar */
+  --navbar-height: 48px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cermaq-blue-dark);
+  border-radius: 3px;
+}
