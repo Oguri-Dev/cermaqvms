@@ -78,7 +78,13 @@ export default function Config() {
     for (let r = 0; r < grid.rows; r++)
       for (let c = 0; c < grid.cols; c++)
         cells.push({ row: r, col: c });
-    createStream({ name: `Stream ${streams.length + 1}`, grid_id: grid.id, stream_ip: '', cells })
+    createStream({
+      name: `Stream ${streams.length + 1}`, grid_id: grid.id, stream_ip: '',
+      file_name: '', ip_server: 'localhost', is_active: false,
+      width_resolution: 1920, height_resolution: 1080,
+      select_flow: 1, bitrate: 3000, fps: 20, gop: 25,
+      hardware_encoding: 1, pc_id: 0, cells,
+    })
       .then(s => { loadAll(); setSelectedId(s.id); setForm({ ...s }); })
       .catch(console.error);
   };
@@ -120,7 +126,9 @@ export default function Config() {
   const assignCameraToCell = (row, col, cameraId) => {
     setForm(prev => {
       const cells = prev.cells.map(c =>
-        c.row === row && c.col === col ? { ...c, camera_id: cameraId || undefined } : c
+        c.row === row && c.col === col
+          ? { ...c, camera_id: cameraId || undefined, active: !!cameraId }
+          : c
       );
       return { ...prev, cells };
     });
@@ -132,7 +140,25 @@ export default function Config() {
   };
 
   // ─── RENDER ───────────────────────────────────────
-  const selectItem = (item) => { setSelectedId(item.id); setForm({ ...item }); };
+  const streamDefaults = {
+    width_resolution: 1920, height_resolution: 1080,
+    bitrate: 3000, fps: 20, gop: 25,
+    hardware_encoding: 1, select_flow: 1, pc_id: 0,
+  };
+
+  const selectItem = (item) => {
+    setSelectedId(item.id);
+    // Apply defaults to stream fields that are 0/undefined
+    if (configTab === 'streams') {
+      const merged = { ...item };
+      for (const [key, def] of Object.entries(streamDefaults)) {
+        if (!merged[key]) merged[key] = def;
+      }
+      setForm(merged);
+    } else {
+      setForm({ ...item });
+    }
+  };
 
   const navItems = [
     { key: 'devices', label: 'Dispositivos', icon: 'M15.6 11.6L22 7v10l-6.4-4.6M2 5h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2z' },
@@ -250,6 +276,14 @@ export default function Config() {
             {/* CAMERA: todos los campos */}
             {form.type === 'camera' && (
               <>
+                <div className="config-form-row">
+                  <div className="config-form-group"><label>Usuario RTSP</label>
+                    <input value={form.user || ''} onChange={e => setForm(f => ({ ...f, user: e.target.value }))} placeholder="admin" />
+                  </div>
+                  <div className="config-form-group"><label>Contraseña RTSP</label>
+                    <input type="password" value={form.pass || ''} onChange={e => setForm(f => ({ ...f, pass: e.target.value }))} />
+                  </div>
+                </div>
                 <div className="config-form-row">
                   <div className="config-form-group"><label>NVR asociado</label>
                     <select value={form.nvr_id || ''} onChange={e => setForm(f => ({ ...f, nvr_id: e.target.value || undefined }))}>
@@ -370,7 +404,7 @@ export default function Config() {
                 <input value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="config-form-group"><label>Nombre archivo (URL RTSP)</label>
-                <input value={form.file_name || ''} onChange={e => setForm(f => ({ ...f, file_name: e.target.value }))} placeholder="pantalla1" />
+                <input value={form.file_name || ''} onChange={e => setForm(f => ({ ...f, file_name: e.target.value }))} placeholder="pantalla1 (solo nombre, sin URL)" />
               </div>
             </div>
             <div className="config-form-row">

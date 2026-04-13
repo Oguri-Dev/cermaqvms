@@ -5,6 +5,15 @@ frontend/dist/
 # Go build
 backend/vms-cermaq
 backend/vms-cermaq.exe
+compressor/vms-compressor
+compressor/vms-compressor.exe
+
+# FFmpeg / MediaMTX binaries (download locally)
+compressor/ffmpeg.exe
+mediamtx/
+mediamtx.zip
+ffmpeg.zip
+ffmpeg_tmp/
 
 # Environment
 .env
@@ -17,6 +26,7 @@ backend/vms-cermaq.exe
 # OS
 .DS_Store
 Thumbs.db
+-
 
 # Claude Code memory (local only)
 .claude/

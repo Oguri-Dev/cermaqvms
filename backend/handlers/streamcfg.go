@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -258,10 +259,16 @@ func GetStreamFull(w http.ResponseWriter, r *http.Request) {
 		cells = append(cells, cf)
 	}
 
+	// Auto-generate WHEP URL if stream_ip is empty but ip_server and file_name exist
+	streamIP := stream.StreamIP
+	if streamIP == "" && stream.IPServer != "" && stream.FileName != "" {
+		streamIP = fmt.Sprintf("http://%s:8889/%s/", stream.IPServer, stream.FileName)
+	}
+
 	response := map[string]interface{}{
 		"id":        stream.ID,
 		"name":      stream.Name,
-		"stream_ip": stream.StreamIP,
+		"stream_ip": streamIP,
 		"grid": map[string]interface{}{
 			"id":   grid.ID,
 			"name": grid.Name,

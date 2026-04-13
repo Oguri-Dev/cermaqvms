@@ -106,11 +106,15 @@ func buildScreenConfiguration(ctx context.Context, stream models.Stream) (*model
 					cell.WFactor = sc.WFactor
 				}
 
-				// Resolve NVR credentials and IP
+				// Resolve credentials: NVR first, fall back to camera's own
 				if nvr, ok := nvrsMap[cam.NVRID]; ok {
 					cell.IPNVR = nvr.IP
 					cell.User = nvr.User
 					cell.Pass = nvr.Pass
+				} else {
+					// Direct camera — use its own credentials
+					cell.User = cam.User
+					cell.Pass = cam.Pass
 				}
 			}
 		}

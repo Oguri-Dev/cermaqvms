@@ -9,7 +9,9 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
   const detectScreens = async () => {
     try {
       const details = await window.getScreenDetails();
-      const mapped = details.screens.map((s, i) => ({
+      // Filter out ghost screens (0x0 with no label)
+      const real = details.screens.filter(s => s.width > 0 && s.height > 0);
+      const mapped = real.map((s, i) => ({
         index: i,
         label: s.label || `Pantalla ${i + 1}`,
         left: s.left,
@@ -19,46 +21,82 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
         isPrimary: s.isPrimary,
       }));
       setDetectedScreens(mapped);
-
-      // Auto-update screen config layout count
-      if (mapped.length !== screens.length) {
-        // Preserve existing assignments
-        const newScreens = mapped.map((s, i) => {
-          const existing = screens.find(sc => sc.slot === i);
-          return {
-            slot: i,
-            stream_id: existing?.stream_id || '',
-            screen_label: s.label,
-            screen_left: s.left,
-            screen_top: s.top,
-            screen_width: s.width,
-            screen_height: s.height,
-          };
-        });
-        onScreensChange(newScreens, mapped.length);
-      }
+      syncScreenConfig(mapped);
     } catch (err) {
       console.error('Screen detection failed:', err);
     }
+  };
+
+  const addScreenManually = () => {
+    const current = detectedScreens || [];
+    const i = current.length;
+    const lastScreen = current[current.length - 1];
+    const newScreen = {
+      index: i,
+      label: `Pantalla ${i + 1}`,
+      left: lastScreen ? lastScreen.left + lastScreen.width + 20 : 0,
+      top: 0,
+      width: 3840,
+      height: 2160,
+      isPrimary: false,
+    };
+    const updated = [...current, newScreen];
+    setDetectedScreens(updated);
+    syncScreenConfig(updated);
+  };
+
+  const removeScreen = (index) => {
+    const updated = (detectedScreens || [])
+      .filter(s => s.index !== index)
+      .map((s, i) => ({ ...s, index: i }));
+    setDetectedScreens(updated);
+    syncScreenConfig(updated);
+  };
+
+  const syncScreenConfig = (mapped) => {
+    const newScreens = mapped.map((s, i) => {
+      const existing = screens.find(sc => sc.slot === i);
+      return {
+        slot: i,
+        stream_id: existing?.stream_id || '',
+        screen_label: s.label,
+        screen_left: s.left,
+        screen_top: s.top,
+        screen_width: s.width,
+        screen_height: s.height,
+      };
+    });
+    onScreensChange(newScreens, mapped.length);
   };
 
   // Calculate visual layout for the minimap
   const layoutStyle = useMemo(() => {
     if (!detectedScreens || detectedScreens.length === 0) return null;
 
-    const minLeft = Math.min(...detectedScreens.map(s => s.left));
-    const minTop = Math.min(...detectedScreens.map(s => s.top));
-    const maxRight = Math.max(...detectedScreens.map(s => s.left + s.width));
-    const maxBottom = Math.max(...detectedScreens.map(s => s.top + s.height));
+    // If all screens share the same position, lay them out side by side
+    const positioned = detectedScreens.map(s => ({ ...s }));
+    const allSamePos = positioned.every(s => s.left === positioned[0].left && s.top === positioned[0].top);
+    if (allSamePos && positioned.length > 1) {
+      let offset = 0;
+      for (const s of positioned) {
+        s.left = offset;
+        s.top = 0;
+        offset += s.width + 20;
+      }
+    }
+
+    const minLeft = Math.min(...positioned.map(s => s.left));
+    const minTop = Math.min(...positioned.map(s => s.top));
+    const maxRight = Math.max(...positioned.map(s => s.left + s.width));
+    const maxBottom = Math.max(...positioned.map(s => s.top + s.height));
 
     const totalW = maxRight - minLeft;
     const totalH = maxBottom - minTop;
 
-    // Scale to fit in the canvas (max 500px wide, 250px tall)
-    const scale = Math.min(500 / totalW, 250 / totalH);
+    const scale = Math.min(600 / totalW, 250 / totalH);
 
     return {
-      monitors: detectedScreens.map(s => ({
+      monitors: positioned.map(s => ({
         ...s,
         x: (s.left - minLeft) * scale,
         y: (s.top - minTop) * scale,
@@ -92,9 +130,12 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
             <button className="screen-mapper-detect-btn" onClick={detectScreens}>
               Detectar Pantallas
             </button>
+            <button className="screen-mapper-detect-btn" onClick={addScreenManually}>
+              + Agregar Manual
+            </button>
             <span className="screen-mapper-detect-info">
               {detectedScreens
-                ? `${detectedScreens.length} pantalla${detectedScreens.length > 1 ? 's' : ''} detectada${detectedScreens.length > 1 ? 's' : ''}`
+                ? `${detectedScreens.length} pantalla${detectedScreens.length > 1 ? 's' : ''}`
                 : 'Haz click para detectar los monitores conectados'}
             </span>
           </div>
@@ -146,10 +187,11 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
                       <option value="">-- Sin asignar --</option>
                       {grids.map(g => (
                         <option key={g.id} value={g.id}>
-                          {g.name} ({g.type === 'submarine' ? 'Sub' : 'Domo'} {g.rows}x{g.cols})
+                          {g.name}
                         </option>
                       ))}
                     </select>
+                    <button className="screen-mapper-remove-btn" onClick={() => removeScreen(s.index)} title="Quitar">×</button>
                   </div>
                 );
               })}
