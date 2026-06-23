@@ -419,3 +419,289 @@
   font-size: 14px;
   color: var(--text-secondary);
 }
+
+/* ── Servidor del centro ── */
+.config-center-screen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.config-center-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.config-center-dot.on { background: #4caf50; }
+.config-center-dot.off { background: #555; }
+
+.config-center-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cermaq-cyan);
+}
+
+.config-center-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.config-center-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.config-import-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+  max-width: 720px;
+}
+
+.config-server-actions {
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.config-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+}
+
+.config-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.config-info-row span {
+  color: var(--text-secondary);
+}
+
+.config-info-row b {
+  color: var(--text-primary, #e6f0f7);
+  font-weight: 600;
+}
+
+.config-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.config-color-row input[type="color"] {
+  width: 48px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.config-color-presets {
+  display: flex;
+  gap: 6px;
+}
+
+.config-color-preset {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.config-color-preset.active {
+  border-color: var(--cermaq-cyan, #4dc8e8);
+  box-shadow: 0 0 0 2px rgba(77, 200, 232, 0.3);
+}
+
+.config-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.config-user-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6f0f7;
+}
+
+.config-user-role {
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: #e6f0f7;
+  font-size: 13px;
+}
+
+.config-center-screen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.config-center-toggle {
+  margin-left: auto;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--cermaq-cyan, #4dc8e8);
+  background: transparent;
+  color: var(--cermaq-cyan, #4dc8e8);
+}
+
+.config-center-toggle.on {
+  border-color: #ff6363;
+  color: #ff9d9d;
+}
+
+.config-center-toggle:hover {
+  background: rgba(77, 200, 232, 0.12);
+}
+
+.config-center-toggle.on:hover {
+  background: rgba(255, 99, 99, 0.12);
+}
+
+/* ── Monitoreo (historial de uso) ── */
+.config-monitor-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.config-monitor-controls {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.config-monitor-controls .config-form-group {
+  flex: 0 0 auto;
+}
+.config-monitor-controls input[type="date"] {
+  color-scheme: dark;
+}
+
+.config-monitor-totals {
+  display: flex;
+  gap: 14px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+.config-monitor-card {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--cermaq-navy);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--cermaq-cyan);
+  border-radius: 6px;
+}
+.config-monitor-card-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.config-monitor-card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.config-monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.config-monitor-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--border-color);
+}
+.config-monitor-table td {
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+.config-monitor-table tr:hover td {
+  background: rgba(77, 200, 232, 0.05);
+}
+
+.config-monitor-streams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.config-monitor-stream-pill {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--cermaq-blue-dark);
+  border: 1px solid var(--cermaq-blue);
+  color: var(--cermaq-cyan);
+  white-space: nowrap;
+}
+
+.config-section-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 20px 0 10px;
+}
+.config-monitor-by-stream {
+  max-width: 480px;
+}
+.config-monitor-stream-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+.config-monitor-stream-name {
+  color: var(--text-secondary);
+}
+.config-monitor-stream-bytes {
+  color: var(--text-primary);
+  font-weight: 600;
+}

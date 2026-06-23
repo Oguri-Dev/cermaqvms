@@ -1,18 +1,25 @@
-import { ptzMove, ptzPreset } from '../api/grids';
+import { useEffect } from 'react';
+import { usePtz } from '../hooks/usePtz';
 import './PTZControls.css';
 
-export default function PTZControls({ gridId, cell, row, col, onClose }) {
-  const sendMove = (action) => {
-    ptzMove(gridId, row, col, { action, speed: 0.5 }).catch(console.error);
-  };
+// Panel PTZ modal (right-click sobre una celda PTZ). Comparte la lógica de
+// movimiento/keepalive con el overlay de hover (hooks/usePtz.js).
+export default function PTZControls({ cameraName, onClose }) {
+  const { startMove, stopMove, gotoPreset, presets, loadPresets, error } = usePtz(cameraName);
 
-  const sendStop = () => {
-    ptzMove(gridId, row, col, { action: 'stop', speed: 0 }).catch(console.error);
-  };
+  useEffect(() => { loadPresets(); }, [loadPresets]);
 
-  const gotoPreset = (presetId) => {
-    ptzPreset(gridId, row, col, { preset_id: presetId, action: 'goto' }).catch(console.error);
-  };
+  const moveBtn = (direction, label, className = 'ptz-btn') => (
+    <button
+      className={className}
+      onPointerDown={() => startMove(direction)}
+      onPointerUp={stopMove}
+      onPointerLeave={stopMove}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="ptz-overlay" onClick={onClose}>
@@ -20,45 +27,47 @@ export default function PTZControls({ gridId, cell, row, col, onClose }) {
         <div className="ptz-header">
           <div>
             <div className="ptz-title">Control PTZ</div>
-            <div className="ptz-subtitle">{cell?.cage_name || `Celda [${row},${col}]`}</div>
+            <div className="ptz-subtitle">{cameraName}</div>
           </div>
           <button className="ptz-close" onClick={onClose}>&times;</button>
         </div>
 
         <div className="ptz-dpad">
           <div />
-          <button className="ptz-btn" onMouseDown={() => sendMove('up')} onMouseUp={sendStop}>&#9650;</button>
+          {moveBtn('up', '▲')}
           <div />
-          <button className="ptz-btn" onMouseDown={() => sendMove('left')} onMouseUp={sendStop}>&#9664;</button>
+          {moveBtn('left', '◀')}
           <button className="ptz-btn center">PTZ</button>
-          <button className="ptz-btn" onMouseDown={() => sendMove('right')} onMouseUp={sendStop}>&#9654;</button>
+          {moveBtn('right', '▶')}
           <div />
-          <button className="ptz-btn" onMouseDown={() => sendMove('down')} onMouseUp={sendStop}>&#9660;</button>
+          {moveBtn('down', '▼')}
           <div />
         </div>
 
         <div>
           <div className="ptz-zoom-label">Zoom</div>
           <div className="ptz-zoom">
-            <button className="ptz-zoom-btn" onMouseDown={() => sendMove('zoom_out')} onMouseUp={sendStop}>&minus;</button>
-            <button className="ptz-zoom-btn" onMouseDown={() => sendMove('zoom_in')} onMouseUp={sendStop}>+</button>
+            {moveBtn('zoom_out', '−', 'ptz-zoom-btn')}
+            {moveBtn('zoom_in', '+', 'ptz-zoom-btn')}
           </div>
         </div>
 
         <div className="ptz-presets">
           <div className="ptz-presets-label">Presets</div>
-          <div className="ptz-presets-grid">
-            {Array.from({ length: 8 }, (_, i) => (
-              <button
-                key={i + 1}
-                className="ptz-preset-btn"
-                onClick={() => gotoPreset(i + 1)}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
+          {presets === null && <div className="ptz-presets-empty">Cargando...</div>}
+          {presets?.length === 0 && <div className="ptz-presets-empty">Sin presets configurados</div>}
+          {presets?.length > 0 && (
+            <div className="ptz-presets-grid">
+              {presets.map(p => (
+                <button key={p.id} className="ptz-preset-btn" onClick={() => gotoPreset(p.id)} title={p.name}>
+                  {p.name || p.id}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {error && <div className="ptz-error">{error}</div>}
       </div>
     </div>
   );

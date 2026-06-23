@@ -52,3 +52,23 @@
   border-radius: 3px;
   opacity: 0.6;
 }
+
+.grid-cell-offline {
+  background: rgba(0, 0, 0, 0.55);
+  border-color: rgba(255, 99, 99, 0.5);
+}
+
+.cell-offline-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff6363;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 3px 10px;
+  border-radius: 3px;
+  user-select: none;
+}

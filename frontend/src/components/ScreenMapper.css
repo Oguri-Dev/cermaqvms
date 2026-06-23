@@ -218,3 +218,15 @@
   text-align: center;
   padding: 20px;
 }
+
+.screen-mapper-notice {
+  margin: 10px 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ffc34d;
+  background: rgba(80, 60, 0, 0.3);
+  border: 1px solid rgba(255, 195, 77, 0.35);
+  border-radius: 4px;
+  max-width: 720px;
+}

@@ -154,16 +154,28 @@ func SyncScreenConfiguration(ctx context.Context, stream models.Stream) error {
 		return err
 	}
 
-	col := database.GetCollection("screen_configuration")
 	filter := bson.M{"fileName": stream.FileName}
 	opts := options.Replace().SetUpsert(true)
 
+	// Write to local MongoDB
+	col := database.GetCollection("screen_configuration")
 	_, err = col.ReplaceOne(ctx, filter, doc, opts)
 	if err != nil {
-		return fmt.Errorf("upserting screen_configuration: %w", err)
+		return fmt.Errorf("upserting screen_configuration (local): %w", err)
+	}
+	log.Printf("[pontón] screen_configuration synced locally for fileName=%q", stream.FileName)
+
+	// Write to remote pontón MongoDB if configured
+	if database.PontonDB != nil {
+		remoteCol := database.PontonDB.Collection("screen_configuration")
+		_, err = remoteCol.ReplaceOne(ctx, filter, doc, opts)
+		if err != nil {
+			log.Printf("[pontón] WARNING: remote sync failed for fileName=%q: %v", stream.FileName, err)
+		} else {
+			log.Printf("[pontón] screen_configuration synced to REMOTE for fileName=%q", stream.FileName)
+		}
 	}
 
-	log.Printf("[pontón] screen_configuration synced for fileName=%q", stream.FileName)
 	return nil
 }
 

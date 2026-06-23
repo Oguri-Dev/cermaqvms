@@ -3,10 +3,12 @@ import './ScreenMapper.css';
 
 export default function ScreenMapper({ grids, screens, onScreensChange }) {
   const [detectedScreens, setDetectedScreens] = useState(null);
+  const [detectNotice, setDetectNotice] = useState(null);
 
   const hasAPI = 'getScreenDetails' in window;
 
   const detectScreens = async () => {
+    setDetectNotice(null);
     try {
       const details = await window.getScreenDetails();
       // Filter out ghost screens (0x0 with no label)
@@ -22,8 +24,24 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
       }));
       setDetectedScreens(mapped);
       syncScreenConfig(mapped);
+      if (mapped.length === 1) {
+        setDetectNotice(
+          '¿Faltan monitores? Algunos navegadores (Brave) limitan esta API por privacidad ' +
+          'y entregan solo la pantalla actual: usa Chrome o Edge, verifica el permiso ' +
+          '"Administración de ventanas" en el candado de la barra de direcciones, ' +
+          'o agrega el monitor con "+ Agregar Manual".'
+        );
+      }
     } catch (err) {
       console.error('Screen detection failed:', err);
+      if (err.name === 'NotAllowedError') {
+        setDetectNotice(
+          'Permiso de administración de ventanas denegado. Habilítalo en el candado de la ' +
+          'barra de direcciones (Configuración del sitio → Administración de ventanas → Permitir) y reintenta.'
+        );
+      } else {
+        setDetectNotice(`No se pudieron detectar las pantallas: ${err.message}`);
+      }
     }
   };
 
@@ -139,6 +157,10 @@ export default function ScreenMapper({ grids, screens, onScreensChange }) {
                 : 'Haz click para detectar los monitores conectados'}
             </span>
           </div>
+
+          {detectNotice && (
+            <div className="screen-mapper-notice">{detectNotice}</div>
+          )}
 
           {layoutStyle && (
             <div className="screen-mapper-canvas">

@@ -68,3 +68,48 @@
   height: 32px;
   opacity: 0.3;
 }
+
+/* Overlay de reconexión: spinner centrado, el último frame queda visible debajo */
+.grid-screen-reconnecting {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.reconnect-spinner {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.reconnect-spinner span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 18px;
+  margin: -9px 0 0 -3.5px;
+  border-radius: 4px;
+  background: #38b6ff;
+  opacity: 0.15;
+  animation: reconnect-fade 1s linear infinite;
+}
+
+@keyframes reconnect-fade {
+  0% { opacity: 1; }
+  100% { opacity: 0.15; }
+}
+
+.reconnect-text {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #cfeeff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}

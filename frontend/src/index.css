@@ -63,3 +63,13 @@ body {
   background: var(--cermaq-blue-dark);
   border-radius: 3px;
 }
+
+.app-loading, .operator-home {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #9bb3c4);
+  font-size: 14px;
+}

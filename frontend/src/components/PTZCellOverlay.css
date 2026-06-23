@@ -1,0 +1,118 @@
+.ptz-cell-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 12px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.grid-cell:hover .ptz-cell-overlay {
+  opacity: 1;
+}
+
+.ptz-cell-overlay button {
+  pointer-events: auto;
+}
+
+.ptz-cell-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 20, 40, 0.7);
+  border: 1px solid rgba(77, 200, 232, 0.35);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.ptz-cell-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 30px);
+  grid-template-rows: repeat(3, 30px);
+  gap: 2px;
+}
+
+.ptz-cell-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 119, 182, 0.55);
+  border: 1px solid rgba(77, 200, 232, 0.4);
+  border-radius: 4px;
+  color: #e6f7ff;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.ptz-cell-btn:hover {
+  background: rgba(0, 150, 220, 0.75);
+}
+
+.ptz-cell-btn:active {
+  background: var(--cermaq-cyan, #4dc8e8);
+  color: #00263f;
+}
+
+.ptz-cell-center {
+  align-self: center;
+  justify-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(77, 200, 232, 0.5);
+}
+
+.ptz-cell-zoom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ptz-cell-zoom .ptz-cell-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+.ptz-cell-presets {
+  display: flex;
+  gap: 4px;
+  max-width: 90%;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.ptz-cell-preset {
+  flex-shrink: 0;
+  background: rgba(0, 43, 92, 0.8);
+  border: 1px solid rgba(77, 200, 232, 0.4);
+  border-radius: 10px;
+  color: var(--cermaq-cyan, #4dc8e8);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ptz-cell-preset:hover {
+  background: rgba(0, 119, 182, 0.8);
+  color: #fff;
+}
+
+.ptz-cell-error {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff9d9d;
+  background: rgba(92, 0, 21, 0.8);
+  border: 1px solid rgba(255, 99, 99, 0.4);
+  border-radius: 4px;
+  padding: 3px 8px;
+}

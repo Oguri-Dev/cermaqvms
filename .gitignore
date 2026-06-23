@@ -5,8 +5,16 @@ frontend/dist/
 # Go build
 backend/vms-cermaq
 backend/vms-cermaq.exe
+backend/vms-cermaq.exe~
 compressor/vms-compressor
 compressor/vms-compressor.exe
+
+# PTZ service: binarios compilados (la fuente sí se versiona)
+ptz-service/vms-ptz
+ptz-service/vms-ptz-linux
+
+# Servicio PTZ legado (reemplazado por ptz-service/)
+ptzControll/ptz_server
 
 # FFmpeg / MediaMTX binaries (download locally)
 compressor/ffmpeg.exe

@@ -13,19 +13,25 @@ export async function connectWHEP(url) {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  // Wait for ICE gathering to complete
+  // Wait for ICE gathering, con tope: en red local/VPN los host candidates
+  // bastan, y sin salida a internet el STUN puede demorar ~10s en expirar.
   await new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') {
       resolve();
-    } else {
-      const check = () => {
-        if (pc.iceGatheringState === 'complete') {
-          pc.removeEventListener('icegatheringstatechange', check);
-          resolve();
-        }
-      };
-      pc.addEventListener('icegatheringstatechange', check);
+      return;
     }
+    const timeout = setTimeout(() => {
+      pc.removeEventListener('icegatheringstatechange', check);
+      resolve();
+    }, 2000);
+    const check = () => {
+      if (pc.iceGatheringState === 'complete') {
+        clearTimeout(timeout);
+        pc.removeEventListener('icegatheringstatechange', check);
+        resolve();
+      }
+    };
+    pc.addEventListener('icegatheringstatechange', check);
   });
 
   const whepUrl = url.endsWith('/') ? `${url}whep` : `${url}/whep`;

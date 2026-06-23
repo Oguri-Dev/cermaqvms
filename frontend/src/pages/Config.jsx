@@ -4,18 +4,54 @@ import {
   listGrids, createGrid, updateGrid, deleteGrid,
   listStreams, createStream, updateStream, deleteStream, syncStream,
   getScreenConfig, updateScreenConfig,
+  getCenterConfig, updateCenterConfig, getCenterStatus, listCenterScreens, importFromCenter,
+  setCenterScreenActive,
+  listUsers, createUser, updateUser, deleteUser,
+  getUsage, downloadUsageCSV,
 } from '../api/grids';
 import ScreenMapper from '../components/ScreenMapper';
 import './Config.css';
 
+// Formato de datos consumidos: GB con 2 decimales si supera 1 GB, si no MB.
+function fmtBytes(b) {
+  if (!b) return '0 MB';
+  const mb = b / 1e6;
+  if (mb >= 1000) return `${(mb / 1000).toFixed(2)} GB`;
+  return `${mb.toFixed(1)} MB`;
+}
+// Segundos a "Xh Ym".
+function fmtHours(secs) {
+  if (!secs) return '0h';
+  const h = Math.floor(secs / 3600);
+  const m = Math.round((secs % 3600) / 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
 export default function Config() {
-  const [configTab, setConfigTab] = useState('cameras');
+  const [configTab, setConfigTab] = useState('server');
 
   // Data
   const [devices, setDevices] = useState([]);
   const [grids, setGrids] = useState([]);
   const [streams, setStreams] = useState([]);
   const [screenConfig, setScreenConfig] = useState({ center_name: '', layout: 1, screens: [] });
+  const [centerConfig, setCenterConfig] = useState({ mongo_uri: '', db_name: '', host: '' });
+  const [centerStatus, setCenterStatus] = useState(null); // null | 'saving' | {mongo_connected, compressor_connected}
+  const [centerScreens, setCenterScreens] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'operator' });
+  const [userError, setUserError] = useState(null);
+
+  // Monitoreo (historial de uso). Rango por defecto: últimos 7 días.
+  const [usageRange, setUsageRange] = useState(() => {
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 6);
+    return { from: fmt(from), to: fmt(to) };
+  });
+  const [usage, setUsage] = useState(null);     // {days, totals, ...} | null
+  const [usageState, setUsageState] = useState(null); // null | 'loading' | 'exporting' | {error}
 
   // Selection
   const [selectedId, setSelectedId] = useState(null);
@@ -29,6 +65,45 @@ export default function Config() {
     listGrids().then(setGrids).catch(console.error);
     listStreams().then(setStreams).catch(console.error);
     getScreenConfig().then(setScreenConfig).catch(console.error);
+    getCenterConfig().then(setCenterConfig).catch(console.error);
+    listCenterScreens().then(setCenterScreens).catch(() => setCenterScreens(null));
+    getCenterStatus().then(setCenterStatus).catch(() => {});
+    listUsers().then(setUsers).catch(console.error);
+  };
+
+  // ─── USUARIOS ─────────────────────────────────────
+  const addUser = () => {
+    setUserError(null);
+    createUser(newUser)
+      .then(() => { setNewUser({ username: '', password: '', role: 'operator' }); listUsers().then(setUsers); })
+      .catch(err => setUserError(err.message));
+  };
+  const changeUserRole = (id, role) => updateUser(id, { role }).then(() => listUsers().then(setUsers)).catch(console.error);
+  const resetUserPassword = (id) => {
+    const pwd = prompt('Nueva contraseña:');
+    if (pwd) updateUser(id, { password: pwd }).then(() => alert('Contraseña actualizada')).catch(err => alert(err.message));
+  };
+  // ─── MONITOREO (historial de uso) ──────────────────
+  const loadUsage = () => {
+    setUsageState('loading');
+    getUsage(usageRange.from, usageRange.to)
+      .then(data => { setUsage(data); setUsageState(null); })
+      .catch(err => { setUsage(null); setUsageState({ error: err.message }); });
+  };
+  const exportUsage = () => {
+    setUsageState('exporting');
+    downloadUsageCSV(usageRange.from, usageRange.to)
+      .then(() => setUsageState(null))
+      .catch(err => setUsageState({ error: err.message }));
+  };
+  // Carga automática al entrar a la pestaña o cambiar el rango
+  useEffect(() => {
+    if (configTab === 'monitor') loadUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configTab, usageRange.from, usageRange.to]);
+
+  const removeUser = (id) => {
+    if (confirm('¿Eliminar este usuario?')) deleteUser(id).then(() => listUsers().then(setUsers)).catch(err => alert(err.message));
   };
 
   useEffect(() => { loadAll(); }, []);
@@ -139,6 +214,51 @@ export default function Config() {
     updateScreenConfig(screenConfig).then(loadAll).catch(console.error);
   };
 
+  // ─── CENTER CONFIG (servidor) ─────────────────────
+  const saveCenterConfig = () => {
+    setCenterStatus('saving');
+    updateCenterConfig(centerConfig)
+      .then(res => {
+        setCenterStatus(res);
+        listCenterScreens().then(setCenterScreens).catch(() => setCenterScreens(null));
+      })
+      .catch(err => {
+        console.error(err);
+        setCenterStatus({ error: err.message });
+      });
+  };
+
+  const refreshCenter = () => {
+    setCenterStatus('refreshing');
+    Promise.all([
+      getCenterStatus().catch(() => ({ error: 'sin respuesta del backend' })),
+      listCenterScreens().catch(() => null),
+    ]).then(([status, screens]) => {
+      setCenterStatus(status);
+      setCenterScreens(screens);
+    });
+  };
+
+  const toggleCenterScreen = (fileName, active) => {
+    setCenterScreenActive(fileName, active)
+      .then(() => listCenterScreens().then(setCenterScreens))
+      .catch(err => alert('No se pudo cambiar el estado: ' + err.message));
+  };
+
+  const [importStatus, setImportStatus] = useState(null); // null | 'importing' | {counts} | {error}
+  const runImport = () => {
+    setImportStatus('importing');
+    importFromCenter()
+      .then(res => {
+        setImportStatus(res);
+        loadAll(); // refrescar dispositivos, grillas y streams importados
+      })
+      .catch(err => {
+        console.error(err);
+        setImportStatus({ error: err.message });
+      });
+  };
+
   // ─── RENDER ───────────────────────────────────────
   const streamDefaults = {
     width_resolution: 1920, height_resolution: 1080,
@@ -161,10 +281,13 @@ export default function Config() {
   };
 
   const navItems = [
+    { key: 'server', label: 'Servidor', icon: 'M2 2h20v8H2zM2 14h20v8H2zM6 6h.01M6 18h.01' },
     { key: 'devices', label: 'Dispositivos', icon: 'M15.6 11.6L22 7v10l-6.4-4.6M2 5h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2z' },
     { key: 'grids', label: 'Grillas', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z' },
-    { key: 'streams', label: 'Streams', icon: 'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7zm0 0M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
+    { key: 'streams', label: 'Streams', icon: 'M1 4v6h6 M23 20v-6h-6 M20.49 9A9 9 0 0 0 5.64 5.64L1 10 M3.51 15A9 9 0 0 0 18.36 18.36L23 14' },
     { key: 'screens', label: 'Pantallas', icon: 'M2 3h20v14H2zM8 21h8M12 17v4' },
+    { key: 'monitor', label: 'Monitoreo', icon: 'M3 3v18h18 M7 14l4-4 3 3 5-6' },
+    { key: 'users', label: 'Usuarios', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
   ];
 
   const currentList = configTab === 'devices' ? devices
@@ -172,9 +295,9 @@ export default function Config() {
     : configTab === 'streams' ? streams
     : [];
 
-  const currentNew = configTab === 'grids' ? newGrid
-    : configTab === 'streams' ? newStream
-    : null;
+  // Dispositivos y grillas vienen de "Importar del Centro"; solo los streams
+  // pueden crearse a mano si hiciera falta
+  const currentNew = configTab === 'streams' ? newStream : null;
 
   return (
     <div className="config">
@@ -200,16 +323,10 @@ export default function Config() {
         ))}
       </div>
 
-      {configTab !== 'screens' && (
+      {configTab !== 'screens' && configTab !== 'server' && configTab !== 'users' && configTab !== 'monitor' && (
         <div className="config-sub-sidebar">
           <div className="config-sidebar-header">
             <span className="config-sidebar-title">{navItems.find(n => n.key === configTab)?.label}</span>
-            {configTab === 'devices' && (
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button className="config-add-btn" onClick={() => newDevice('nvr')}>+ NVR</button>
-                <button className="config-add-btn" onClick={() => newDevice('camera')}>+ Cam</button>
-              </div>
-            )}
             {currentNew && <button className="config-add-btn" onClick={currentNew}>+ Nueva</button>}
           </div>
           <div className="config-grid-list">
@@ -247,131 +364,237 @@ export default function Config() {
         </div>
       )}
 
-      {/* ── DEVICES EDITOR ── */}
-      {configTab === 'devices' && form && (
+      {/* ── SERVER (conexión al centro) ── */}
+      {configTab === 'server' && (
         <div className="config-main">
           <div className="config-section">
-            <div className="config-section-title">{form.type === 'nvr' ? 'NVR' : 'Cámara'}</div>
+            <div className="config-section-title">Conexión al Servidor del Centro</div>
             <div className="config-form-row">
-              <div className="config-form-group"><label>Nombre</label>
-                <input value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-              </div>
-              <div className="config-form-group"><label>IP</label>
-                <input value={form.ip || ''} onChange={e => setForm(f => ({ ...f, ip: e.target.value }))} placeholder="192.200.60.3" />
+              <div className="config-form-group"><label>Host del centro (zoom :8087 / WHEP :8889)</label>
+                <input value={centerConfig.host || ''} onChange={e => setCenterConfig(c => ({ ...c, host: e.target.value }))} placeholder="10.1.1.229" />
               </div>
             </div>
-
-            {/* NVR: credenciales RTSP */}
-            {form.type === 'nvr' && (
-              <div className="config-form-row">
-                <div className="config-form-group"><label>Usuario RTSP</label>
-                  <input value={form.user || ''} onChange={e => setForm(f => ({ ...f, user: e.target.value }))} placeholder="admin" />
-                </div>
-                <div className="config-form-group"><label>Contraseña RTSP</label>
-                  <input type="password" value={form.pass || ''} onChange={e => setForm(f => ({ ...f, pass: e.target.value }))} />
-                </div>
+            <div className="config-form-row">
+              <div className="config-form-group"><label>URI de MongoDB</label>
+                <input value={centerConfig.mongo_uri || ''} onChange={e => setCenterConfig(c => ({ ...c, mongo_uri: e.target.value }))} placeholder="mongodb://10.1.1.229:27017" />
               </div>
-            )}
+              <div className="config-form-group"><label>Base de datos</label>
+                <input value={centerConfig.db_name || ''} onChange={e => setCenterConfig(c => ({ ...c, db_name: e.target.value }))} placeholder="camancha_vsmweb" />
+              </div>
+            </div>
+            <div className="config-form-row config-server-actions">
+              <button
+                className="config-save-btn"
+                onClick={saveCenterConfig}
+                disabled={centerStatus === 'saving' || centerStatus === 'refreshing'}
+              >
+                {centerStatus === 'saving' ? 'Conectando...' : 'Guardar y Conectar'}
+              </button>
+              <button
+                className="config-sync-btn"
+                onClick={refreshCenter}
+                disabled={centerStatus === 'saving' || centerStatus === 'refreshing'}
+              >
+                {centerStatus === 'refreshing' ? 'Actualizando...' : 'Actualizar'}
+              </button>
+              {centerStatus && typeof centerStatus === 'object' && (
+                centerStatus.error ? (
+                  <span className="config-sync-err">Error: {centerStatus.error}</span>
+                ) : (
+                  <>
+                    <span className={centerStatus.mongo_connected ? 'config-sync-ok' : 'config-sync-err'}>
+                      MongoDB: {centerStatus.mongo_connected ? 'conectado' : 'sin conexión'}
+                    </span>
+                    <span className={centerStatus.compressor_connected ? 'config-sync-ok' : 'config-sync-err'}>
+                      Compresor: {centerStatus.compressor_connected ? 'conectado' : 'sin conexión'}
+                    </span>
+                  </>
+                )
+              )}
+            </div>
+          </div>
 
-            {/* CAMERA: todos los campos */}
-            {form.type === 'camera' && (
-              <>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>Usuario RTSP</label>
-                    <input value={form.user || ''} onChange={e => setForm(f => ({ ...f, user: e.target.value }))} placeholder="admin" />
-                  </div>
-                  <div className="config-form-group"><label>Contraseña RTSP</label>
-                    <input type="password" value={form.pass || ''} onChange={e => setForm(f => ({ ...f, pass: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>NVR asociado</label>
-                    <select value={form.nvr_id || ''} onChange={e => setForm(f => ({ ...f, nvr_id: e.target.value || undefined }))}>
-                      <option value="">-- Sin NVR (directo) --</option>
-                      {nvrs.map(n => <option key={n.id} value={n.id}>{n.name} ({n.ip})</option>)}
-                    </select>
-                  </div>
-                  {form.nvr_id && (
-                    <div className="config-form-group"><label>Canal NVR</label>
-                      <input type="number" min="1" value={form.nvr_channel || 1} onChange={e => setForm(f => ({ ...f, nvr_channel: parseInt(e.target.value) || 1 }))} />
-                    </div>
-                  )}
-                </div>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>Tipo de cámara</label>
-                    <select value={form.camera_type || 'submarina'} onChange={e => setForm(f => ({ ...f, camera_type: e.target.value }))}>
-                      <option value="submarina">Submarina</option>
-                      <option value="PTZ">PTZ / Domo</option>
-                    </select>
-                  </div>
-                  <div className="config-form-group"><label>&nbsp;</label>
-                    <div className="config-checkbox">
-                      <input type="checkbox" checked={form.has_ptz || false} onChange={e => setForm(f => ({ ...f, has_ptz: e.target.checked }))} />
-                      <label>Soporta PTZ</label>
-                    </div>
-                  </div>
-                </div>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>Jaula</label>
-                    <input value={form.cage_name || ''} onChange={e => setForm(f => ({ ...f, cage_name: e.target.value }))} placeholder="J101" />
-                  </div>
-                  <div className="config-form-group"><label>ID Jaula</label>
-                    <input value={form.cage_id || ''} onChange={e => setForm(f => ({ ...f, cage_id: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>MediaMTX Stream 1</label>
-                    <input value={form.mediamtx_camera1 || ''} onChange={e => setForm(f => ({ ...f, mediamtx_camera1: e.target.value }))} placeholder="J101 A-1" />
-                  </div>
-                  <div className="config-form-group"><label>MediaMTX Stream 2</label>
-                    <input value={form.mediamtx_camera2 || ''} onChange={e => setForm(f => ({ ...f, mediamtx_camera2: e.target.value }))} placeholder="J101 A-2" />
-                  </div>
-                </div>
-                <div className="config-form-row">
-                  <div className="config-form-group"><label>Modo On-Demand</label>
-                    <select value={form.ondemand_mode || 'nvr'} onChange={e => setForm(f => ({ ...f, ondemand_mode: e.target.value }))}>
-                      <option value="nvr">Vía NVR</option>
-                      <option value="direct">Directo a cámara</option>
-                    </select>
-                  </div>
-                </div>
-              </>
+          <div className="config-section">
+            <div className="config-section-title">Pantallas del Centro (screen_configuration)</div>
+            {centerScreens === null && (
+              <div className="config-center-empty">Sin conexión a la base de datos del centro</div>
             )}
+            {centerScreens?.length === 0 && (
+              <div className="config-center-empty">La colección screen_configuration está vacía</div>
+            )}
+            {centerScreens?.map(s => (
+              <div key={s.file_name} className="config-center-screen">
+                <span className={`config-center-dot ${s.active ? 'on' : 'off'}`} />
+                <span className="config-center-name">{s.file_name}</span>
+                <span className="config-center-meta">
+                  {s.rows}x{s.cols} · {s.width_resolution}x{s.height_resolution} · {s.cells.filter(c => c.on).length} cámaras · {s.active ? 'transmitiendo' : 'inactiva'}
+                </span>
+                <button
+                  className={`config-center-toggle ${s.active ? 'on' : ''}`}
+                  onClick={() => toggleCenterScreen(s.file_name, !s.active)}
+                  title={s.active ? 'Detener transmisión' : 'Activar transmisión'}
+                >
+                  {s.active ? 'Detener' : 'Activar'}
+                </button>
+              </div>
+            ))}
           </div>
-          <div className="config-actions">
-            <button className="config-delete-btn" onClick={removeDevice}>Eliminar</button>
-            <button className="config-save-btn" onClick={saveDevice}>Guardar</button>
+
+          <div className="config-section">
+            <div className="config-section-title">Importar al VMS</div>
+            <p className="config-import-hint">
+              Crea/actualiza en la base local las cámaras, grillas y streams con sus coordenadas,
+              leyendo la configuración que corre en el centro. Luego, en <b>Dispositivos</b>, marca
+              qué cámaras son PTZ para darles controles. Las ediciones locales se preservan al reimportar.
+            </p>
+            <div className="config-form-row">
+              <button className="config-save-btn" onClick={runImport} disabled={importStatus === 'importing'}>
+                {importStatus === 'importing' ? 'Importando...' : 'Importar del Centro'}
+              </button>
+              {importStatus?.counts && (
+                <span className="config-sync-ok">
+                  Importado: {importStatus.counts.cameras} cámaras, {importStatus.counts.nvrs} NVRs,{' '}
+                  {importStatus.counts.grids} grillas, {importStatus.counts.streams} streams
+                </span>
+              )}
+              {importStatus?.error && (
+                <span className="config-sync-err">Error: {importStatus.error}</span>
+              )}
+            </div>
           </div>
+
         </div>
       )}
 
-      {/* ── GRIDS EDITOR ── */}
-      {configTab === 'grids' && form && (
+      {/* ── DEVICES (importados; solo se edita PTZ + OSD global) ── */}
+      {configTab === 'devices' && (
         <div className="config-main">
           <div className="config-section">
-            <div className="config-section-title">Layout de Grilla</div>
+            <div className="config-section-title">OSD de las Celdas</div>
+            <p className="config-import-hint">
+              Tamaño y posición de las etiquetas (nombre de jaula) y color de las líneas
+              de la grilla que se dibujan sobre el mosaico.
+            </p>
             <div className="config-form-row">
-              <div className="config-form-group"><label>Nombre</label>
-                <input value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              <div className="config-form-group"><label>Tamaño (px)</label>
+                <input
+                  type="number" min="8" max="48"
+                  value={screenConfig.osd_size || 10}
+                  onChange={e => setScreenConfig(p => ({ ...p, osd_size: parseInt(e.target.value) || 10 }))}
+                />
               </div>
-              <div className="config-form-group"><label>Tipo</label>
-                <select value={form.type || 'submarine'} onChange={e => {
-                  const t = e.target.value;
-                  setForm(f => ({ ...f, type: t, rows: t === 'dome' ? 2 : 4, cols: t === 'dome' ? 2 : 4 }));
-                }}>
-                  <option value="submarine">Submarinas</option>
-                  <option value="dome">Domos</option>
+              <div className="config-form-group"><label>Posición</label>
+                <select
+                  value={screenConfig.osd_position || 'top-left'}
+                  onChange={e => setScreenConfig(p => ({ ...p, osd_position: e.target.value }))}
+                >
+                  <option value="top-left">Superior izquierda</option>
+                  <option value="top-right">Superior derecha</option>
+                  <option value="bottom-left">Inferior izquierda</option>
+                  <option value="bottom-right">Inferior derecha</option>
                 </select>
               </div>
             </div>
             <div className="config-form-row">
-              <div className="config-form-group"><label>Filas</label>
-                <input type="number" min="1" max="8" value={form.rows || 4} onChange={e => setForm(f => ({ ...f, rows: parseInt(e.target.value) || 1 }))} />
-              </div>
-              <div className="config-form-group"><label>Columnas</label>
-                <input type="number" min="1" max="8" value={form.cols || 4} onChange={e => setForm(f => ({ ...f, cols: parseInt(e.target.value) || 1 }))} />
+              <div className="config-form-group"><label>Color de líneas de grilla</label>
+                <div className="config-color-row">
+                  <input
+                    type="color"
+                    value={screenConfig.grid_color || '#ffffff'}
+                    onChange={e => setScreenConfig(p => ({ ...p, grid_color: e.target.value }))}
+                  />
+                  <div className="config-color-presets">
+                    {[
+                      ['#ffffff', 'Blanco'],
+                      ['#ffaa3c', 'Ámbar'],
+                      ['#ffd84d', 'Amarillo'],
+                      ['#ff7a5c', 'Coral'],
+                    ].map(([hex, name]) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        className={`config-color-preset ${(screenConfig.grid_color || '#ffffff') === hex ? 'active' : ''}`}
+                        style={{ background: hex }}
+                        title={name}
+                        onClick={() => setScreenConfig(p => ({ ...p, grid_color: hex }))}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
+            <div className="config-form-row config-server-actions">
+              <button className="config-save-btn" onClick={saveScreenConfig}>Guardar OSD</button>
+              <span className="config-import-hint" style={{ margin: 0 }}>Se aplica al recargar las pantallas</span>
+            </div>
+          </div>
+
+          {form ? (
+            <div className="config-section">
+              <div className="config-section-title">{form.type === 'nvr' ? `NVR · ${form.name}` : `Cámara · ${form.name}`}</div>
+
+              <div className="config-info-list">
+                <div className="config-info-row"><span>IP</span><b>{form.ip || '—'}</b></div>
+                {form.type === 'camera' && (
+                  <>
+                    <div className="config-info-row"><span>NVR</span>
+                      <b>{(() => { const n = nvrs.find(x => x.id === form.nvr_id); return n ? `${n.name} (${n.ip}) · canal ${form.nvr_channel || '—'}` : 'Directo'; })()}</b>
+                    </div>
+                    <div className="config-info-row"><span>MediaMTX</span><b>{form.mediamtx_camera1 || '—'} / {form.mediamtx_camera2 || '—'}</b></div>
+                  </>
+                )}
+                {form.type === 'nvr' && (
+                  <div className="config-info-row"><span>Usuario</span><b>{form.user || '—'}</b></div>
+                )}
+              </div>
+
+              {form.type === 'camera' && (
+                <>
+                  <div className="config-form-row" style={{ marginTop: 12 }}>
+                    <div className="config-form-group"><label>&nbsp;</label>
+                      <div className="config-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={form.has_ptz || false}
+                          onChange={e => setForm(f => ({
+                            ...f,
+                            has_ptz: e.target.checked,
+                            camera_type: e.target.checked ? 'PTZ' : 'submarina',
+                          }))}
+                        />
+                        <label>Es PTZ (muestra controles de movimiento en pantalla)</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="config-actions">
+                    <button className="config-save-btn" onClick={saveDevice}>Guardar</button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="config-section">
+              <p className="config-import-hint" style={{ margin: 0 }}>
+                Selecciona una cámara de la lista para ver su información y marcar si es PTZ.
+                Las cámaras y NVRs se crean y actualizan con <b>Importar del Centro</b> (sección Servidor).
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── GRIDS (importadas; solo visor) ── */}
+      {configTab === 'grids' && form && (
+        <div className="config-main">
+          <div className="config-section">
+            <div className="config-section-title">Grilla · {form.name}</div>
+            <div className="config-info-list">
+              <div className="config-info-row"><span>Dimensiones</span><b>{form.rows} filas × {form.cols} columnas</b></div>
+            </div>
+            <p className="config-import-hint" style={{ marginTop: 10 }}>
+              Las grillas reflejan la configuración que corre en el centro y se actualizan
+              con <b>Importar del Centro</b>.
+            </p>
           </div>
           <div className="config-section">
             <div className="config-section-title">Vista previa</div>
@@ -385,10 +608,6 @@ export default function Config() {
                 </div>
               ))}
             </div>
-          </div>
-          <div className="config-actions">
-            <button className="config-delete-btn" onClick={removeGrid}>Eliminar</button>
-            <button className="config-save-btn" onClick={saveGrid}>Guardar</button>
           </div>
         </div>
       )}
@@ -554,11 +773,161 @@ export default function Config() {
         </div>
       )}
 
+      {/* ── MONITOREO (historial de uso / Starlink) ── */}
+      {configTab === 'monitor' && (
+        <div className="config-main">
+          <div className="config-section">
+            <div className="config-section-title">Historial de Uso</div>
+            <p className="config-monitor-hint">
+              Horas de operación del wall y datos consumidos por cada stream (medidos en el navegador,
+              equivalen a lo que baja por el enlace Starlink).
+            </p>
+            <div className="config-form-row config-monitor-controls">
+              <div className="config-form-group">
+                <label>Desde</label>
+                <input type="date" value={usageRange.from}
+                  max={usageRange.to}
+                  onChange={e => setUsageRange(r => ({ ...r, from: e.target.value }))} />
+              </div>
+              <div className="config-form-group">
+                <label>Hasta</label>
+                <input type="date" value={usageRange.to}
+                  min={usageRange.from}
+                  onChange={e => setUsageRange(r => ({ ...r, to: e.target.value }))} />
+              </div>
+              <button className="config-sync-btn" onClick={loadUsage} disabled={usageState === 'loading'}>
+                {usageState === 'loading' ? 'Cargando...' : 'Actualizar'}
+              </button>
+              <button className="config-save-btn" onClick={exportUsage}
+                disabled={usageState === 'exporting' || !usage?.days?.length}>
+                {usageState === 'exporting' ? 'Exportando...' : 'Exportar CSV'}
+              </button>
+            </div>
+
+            {usageState?.error && (
+              <div className="config-sync-err">Error: {usageState.error}</div>
+            )}
+
+            {usage && (
+              <>
+                <div className="config-monitor-totals">
+                  <div className="config-monitor-card">
+                    <span className="config-monitor-card-label">Horas operativas</span>
+                    <span className="config-monitor-card-value">{fmtHours(usage.totals.open_seconds)}</span>
+                  </div>
+                  <div className="config-monitor-card">
+                    <span className="config-monitor-card-label">Datos totales</span>
+                    <span className="config-monitor-card-value">{fmtBytes(usage.totals.bytes_total)}</span>
+                  </div>
+                  <div className="config-monitor-card">
+                    <span className="config-monitor-card-label">Días con actividad</span>
+                    <span className="config-monitor-card-value">{usage.days.length}</span>
+                  </div>
+                </div>
+
+                {usage.days.length === 0 ? (
+                  <div className="config-center-empty">Sin registros de uso en este rango</div>
+                ) : (
+                  <table className="config-monitor-table">
+                    <thead>
+                      <tr><th>Fecha</th><th>Horas abiertas</th><th>Datos</th><th>Streams</th></tr>
+                    </thead>
+                    <tbody>
+                      {usage.days.map(d => (
+                        <tr key={d.date}>
+                          <td>{d.date}</td>
+                          <td>{fmtHours(d.open_seconds)}</td>
+                          <td>{fmtBytes(d.bytes_total)}</td>
+                          <td className="config-monitor-streams">
+                            {Object.entries(d.bytes_by_stream).sort((a, b) => b[1] - a[1]).map(([name, b]) => (
+                              <span key={name} className="config-monitor-stream-pill">
+                                {name}: {fmtBytes(b)}
+                              </span>
+                            ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                {/* Totales por stream del rango */}
+                {Object.keys(usage.totals.bytes_by_stream || {}).length > 0 && (
+                  <div className="config-monitor-by-stream">
+                    <div className="config-section-subtitle">Consumo por stream (rango)</div>
+                    {Object.entries(usage.totals.bytes_by_stream).sort((a, b) => b[1] - a[1]).map(([name, b]) => (
+                      <div key={name} className="config-monitor-stream-row">
+                        <span className="config-monitor-stream-name">{name}</span>
+                        <span className="config-monitor-stream-bytes">{fmtBytes(b)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── USUARIOS ── */}
+      {configTab === 'users' && (
+        <div className="config-main">
+          <div className="config-section">
+            <div className="config-section-title">Cuentas de Usuario</div>
+            <div className="config-info-list">
+              {users.map(u => (
+                <div key={u.id} className="config-user-row">
+                  <span className="config-user-name">{u.username}</span>
+                  <select
+                    className="config-user-role"
+                    value={u.role}
+                    onChange={e => changeUserRole(u.id, e.target.value)}
+                  >
+                    <option value="admin">Administrador</option>
+                    <option value="operator">Operador</option>
+                  </select>
+                  <button className="config-sync-btn" onClick={() => resetUserPassword(u.id)}>Cambiar clave</button>
+                  <button className="config-delete-btn" onClick={() => removeUser(u.id)}>Eliminar</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="config-section">
+            <div className="config-section-title">Nuevo Usuario</div>
+            <div className="config-form-row">
+              <div className="config-form-group"><label>Usuario</label>
+                <input value={newUser.username} onChange={e => setNewUser(u => ({ ...u, username: e.target.value }))} />
+              </div>
+              <div className="config-form-group"><label>Contraseña</label>
+                <input type="password" value={newUser.password} onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} />
+              </div>
+              <div className="config-form-group"><label>Rol</label>
+                <select value={newUser.role} onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}>
+                  <option value="operator">Operador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+            </div>
+            {userError && <div className="config-form-row"><span className="config-sync-err">{userError}</span></div>}
+            <div className="config-actions">
+              <button className="config-save-btn" onClick={addUser} disabled={!newUser.username || !newUser.password}>Crear Usuario</button>
+            </div>
+          </div>
+
+          <div className="config-section">
+            <p className="config-import-hint" style={{ margin: 0 }}>
+              <b>Operador</b>: ve el muro de pantallas y opera zoom/PTZ. <b>Administrador</b>: además accede a toda la Configuración.
+              Para el muro 24/7, inicia sesión en el PC de las pantallas marcando <b>"Recordar sesión"</b>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Empty states */}
-      {configTab !== 'screens' && !form && (
+      {(configTab === 'grids' || configTab === 'streams') && !form && (
         <div className="config-empty">
-          {configTab === 'devices' && 'Selecciona un dispositivo o crea uno nuevo'}
-          {configTab === 'grids' && 'Selecciona una grilla o crea una nueva'}
+          {configTab === 'grids' && 'Selecciona una grilla para ver su layout'}
           {configTab === 'streams' && 'Selecciona un stream o crea uno nuevo'}
         </div>
       )}

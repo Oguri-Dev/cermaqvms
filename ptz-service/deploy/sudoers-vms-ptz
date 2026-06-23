@@ -1,0 +1,6 @@
+# Permisos NOPASSWD para que el servicio vms-ptz reinicie servicios del equipo
+# desde el endpoint /bootstrap (y /compression/restart) sin pedir contraseña.
+# Instalar como /etc/sudoers.d/vms-ptz (validar con: visudo -cf <archivo>).
+omnifish ALL=(root) NOPASSWD: /usr/bin/systemctl restart gst-grid
+omnifish ALL=(root) NOPASSWD: /usr/bin/systemctl restart mediamtx
+omnifish ALL=(root) NOPASSWD: /usr/bin/systemctl restart vms-ptz

@@ -268,6 +268,7 @@ func GetStreamFull(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"id":        stream.ID,
 		"name":      stream.Name,
+		"file_name": stream.FileName,
 		"stream_ip": streamIP,
 		"grid": map[string]interface{}{
 			"id":   grid.ID,
